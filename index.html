@@ -1,121 +1,254 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discover movies, explore ratings, and find your next favorite film.">
-    <title>CineScope | Movie Explorer</title>
-    <link rel="stylesheet" href="style.css">
+
+    <meta
+        name="description"
+        content="Discover movies, explore ratings, view posters, and find details about your favorite films with CineScope."
+    >
+
+    <meta name="theme-color" content="#0b0d12">
+
+    <title>CineScope | Discover Your Next Movie</title>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Load API configuration before the main JavaScript -->
+    <script src="config.js"></script>
     <script src="script.js" defer></script>
 </head>
+
 <body>
-    <header class="navbar">
-        <a class="brand" href="#" aria-label="CineScope home">
-            <span class="brand-icon">▶</span>
-            <span>Cine<span class="brand-highlight">Scope</span></span>
-        </a>
 
-        <nav class="nav-links" aria-label="Main navigation">
-            <a href="#home" class="active">Discover</a>
-            <a href="#movies">Movies</a>
-            <a href="#about">About</a>
-        </nav>
+    <!-- ==================== HEADER ==================== -->
 
-        <span class="nav-badge">MOVIE EXPLORER</span>
+    <header class="site-header">
+        <div class="container navbar">
+
+            <a href="#" class="logo" aria-label="CineScope home">
+                <span class="logo-icon" aria-hidden="true">▶</span>
+                Cine<span>Scope</span>
+            </a>
+
+            <nav class="nav-links" aria-label="Main navigation">
+                <a href="#" class="active">Discover</a>
+                <a href="#movies">Movies</a>
+                <a href="#about">About</a>
+            </nav>
+
+        </div>
     </header>
 
-    <main>
-        <section class="hero" id="home">
-            <div class="hero-content">
-                <span class="eyebrow"><span class="live-dot"></span> YOUR NEXT MOVIE NIGHT STARTS HERE</span>
 
-                <h1>Find your next<br> <span>favorite movie.</span></h1>
+    <!-- ==================== HERO SECTION ==================== -->
+
+    <main>
+
+        <section class="hero">
+            <div class="container hero-content">
+
+                <span class="eyebrow">
+                    Your next favorite movie awaits
+                </span>
+
+                <h1>
+                    Find your next<br>
+                    <span>movie obsession.</span>
+                </h1>
 
                 <p class="hero-description">
-                    Explore unforgettable stories, discover hidden gems,
-                    and find something worth watching.
+                    Explore popular films, discover hidden gems, and find
+                    your next movie night favorite — all in one place.
                 </p>
 
-                <form class="search-form" id="searchForm">
+                <!-- Search Form -->
+                <form
+                    class="search-form"
+                    id="searchForm"
+                    role="search"
+                >
+
                     <span class="search-icon" aria-hidden="true">⌕</span>
-                    <label class="visually-hidden" for="searchInput">Search movies</label>
+
                     <input
                         type="search"
                         id="searchInput"
-                        placeholder="Search movies by title..."
+                        name="query"
+                        placeholder="Search for movies..."
+                        aria-label="Search for movies"
                         autocomplete="off"
+                        maxlength="150"
                         required
                     >
-                    <button type="submit" id="searchButton">Search <span>→</span></button>
+
+                    <button type="submit" id="searchButton">
+                        Search →
+                    </button>
+
                 </form>
 
-                <p class="search-hint">Try a title like Interstellar, Inception, or The Dark Knight.</p>
-            </div>
-
-            <div class="hero-decoration" aria-hidden="true">
-                <div class="orbit orbit-one"></div>
-                <div class="orbit orbit-two"></div>
-                <div class="hero-play">▶</div>
-                <div class="floating-star star-one">✦</div>
-                <div class="floating-star star-two">✧</div>
             </div>
         </section>
+
+
+        <!-- ==================== MOVIE SECTION ==================== -->
 
         <section class="movies-section" id="movies">
-            <div class="section-heading">
-                <div>
-                    <span class="section-label">YOUR CINEMA GUIDE</span>
-                    <h2 id="resultsTitle">Discover Movies</h2>
-                    <p id="resultsSubtitle">Explore popular picks or search for a movie you love.</p>
+            <div class="container">
+
+                <!-- Section Heading -->
+                <div class="section-heading">
+
+                    <div>
+                        <h2 id="resultsTitle">Popular Movies</h2>
+
+                        <p id="resultsSubtitle">
+                            Explore popular movies and find your next watch.
+                        </p>
+                    </div>
+
+                    <span class="results-count" id="resultsCount">
+                        0 MOVIES
+                    </span>
+
                 </div>
 
-                <span class="results-count" id="resultsCount">READY TO EXPLORE</span>
-            </div>
 
-            <div class="status-message" id="statusMessage" role="status" aria-live="polite">
-                <div class="loader" id="loader" hidden></div>
-                <span id="statusText">Your next great watch is just a search away.</span>
-            </div>
+                <!-- Loading and Status Message -->
+                <div
+                    class="status-message"
+                    id="statusMessage"
+                    role="status"
+                    aria-live="polite"
+                >
 
-            <div class="movie-grid" id="movieGrid"></div>
+                    <div
+                        class="loader"
+                        id="loader"
+                        aria-label="Loading"
+                        hidden
+                    ></div>
 
-            <div class="load-more-container" id="loadMoreContainer" hidden>
-                <button class="load-more-button" id="loadMoreButton" type="button">
-                    Load More Movies <span>↓</span>
-                </button>
+                    <p id="statusText">
+                        Loading movies...
+                    </p>
+
+                </div>
+
+
+                <!-- Movie Cards Are Inserted Here by JavaScript -->
+                <div
+                    class="movie-grid"
+                    id="movieGrid"
+                    aria-label="Movie search results"
+                ></div>
+
+
+                <!-- Load More Button -->
+                <div
+                    class="load-more-container"
+                    id="loadMoreContainer"
+                    hidden
+                >
+
+                    <button
+                        type="button"
+                        class="load-more-button"
+                        id="loadMoreButton"
+                    >
+                        Load More Movies
+                    </button>
+
+                </div>
+
             </div>
         </section>
+
+
+        <!-- ==================== ABOUT SECTION ==================== -->
 
         <section class="about-section" id="about">
-            <div class="about-icon">✦</div>
-            <div>
-                <span class="section-label">MADE FOR MOVIE LOVERS</span>
-                <h2>Less scrolling. More watching.</h2>
+            <div class="container about-content">
+
+                <h2>
+                    Discover more with <span>CineScope.</span>
+                </h2>
+
                 <p>
-                    CineScope helps you explore movie titles, discover new stories,
-                    and learn more about the films that catch your eye.
+                    CineScope makes it easy to explore movies, check ratings,
+                    read descriptions, and discover films you might enjoy.
+                    Search for a title and explore its available details.
                 </p>
+
+                <p class="about-note">
+                    Movie information and images are provided by
+                    The Movie Database (TMDB). CineScope is not endorsed
+                    or certified by TMDB.
+                </p>
+
             </div>
         </section>
+
     </main>
 
-    <footer class="footer">
-        <a class="brand footer-brand" href="#home">
-            <span class="brand-icon">▶</span>
-            <span>Cine<span class="brand-highlight">Scope</span></span>
-        </a>
-        <p>Made with curiosity and a love for cinema.</p>
-        <span class="footer-copy">© <span id="currentYear"></span> CineScope</span>
+
+    <!-- ==================== MOVIE DETAILS DIALOG ==================== -->
+
+    <dialog
+        class="movie-dialog"
+        id="movieDialog"
+        aria-labelledby="dialogTitle"
+    >
+
+        <button
+            type="button"
+            class="dialog-close"
+            id="dialogClose"
+            aria-label="Close movie details"
+        >
+            &times;
+        </button>
+
+        <div id="movieDetails"></div>
+
+    </dialog>
+
+
+    <!-- ==================== FOOTER ==================== -->
+
+    <footer class="site-footer">
+        <div class="container footer-content">
+
+            <p>
+                © <span id="currentYear"></span> CineScope.
+                Made for movie lovers.
+            </p>
+
+            <p>
+                Powered by
+                <a
+                    href="https://www.themoviedb.org/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    TMDB
+                </a>
+            </p>
+
+        </div>
     </footer>
 
-    <dialog class="movie-dialog" id="movieDialog" aria-labelledby="dialogTitle">
-        <button class="dialog-close" id="dialogClose" type="button" aria-label="Close movie details">×</button>
-        <div id="movieDetails"></div>
-    </dialog>
 </body>
 </html>
-```

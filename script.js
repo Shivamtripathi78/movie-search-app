@@ -1,10 +1,6 @@
-```javascript
 const API_BASE = "https://api.themoviedb.org/3";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
-const BACKDROP_BASE = "https://image.tmdb.org/t/p/w780";
 
-// Add your TMDB API Read Access Token in a local config.js file.
-// Never publish a real token in a public repository.
 const API_TOKEN = window.TMDB_READ_ACCESS_TOKEN || "";
 
 const searchForm = document.querySelector("#searchForm");
@@ -28,8 +24,12 @@ let currentPage = 1;
 let totalPages = 1;
 let isLoading = false;
 
-document.querySelector("#currentYear").textContent =
-    new Date().getFullYear();
+// Display the current year in the footer.
+const currentYearElement = document.querySelector("#currentYear");
+
+if (currentYearElement) {
+    currentYearElement.textContent = new Date().getFullYear();
+}
 
 function setStatus(message, showLoader = false) {
     statusText.textContent = message;
@@ -43,6 +43,7 @@ function hideStatus() {
 
 function setLoading(loading) {
     isLoading = loading;
+
     searchButton.disabled = loading;
     searchButton.textContent = loading ? "Searching..." : "Search →";
     loadMoreButton.disabled = loading;
@@ -56,7 +57,7 @@ function updateCount(count) {
 async function apiRequest(endpoint) {
     if (!API_TOKEN) {
         throw new Error(
-            "API token is missing. Configure your TMDB read-access token in config.js."
+            "API token is missing. Add your TMDB read-access token to config.js."
         );
     }
 
@@ -70,18 +71,18 @@ async function apiRequest(endpoint) {
     if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
             throw new Error(
-                "TMDB authentication failed. Check your API token and permissions."
+                "TMDB authentication failed. Check your API token."
             );
         }
 
         if (response.status === 429) {
             throw new Error(
-                "Too many requests. Please wait a moment and try again."
+                "Too many requests. Please wait and try again."
             );
         }
 
         throw new Error(
-            `The movie service returned an error (${response.status}). Please try again.`
+            `The movie service returned an error (${response.status}).`
         );
     }
 
@@ -92,35 +93,43 @@ function createMovieCard(movie) {
     const card = document.createElement("article");
     card.className = "movie-card";
 
+    // Movie poster.
     const posterWrap = document.createElement("div");
     posterWrap.className = "poster-wrap";
 
     if (movie.poster_path) {
         const image = document.createElement("img");
+
         image.src = `${IMAGE_BASE}${movie.poster_path}`;
         image.alt = `${movie.title || movie.name || "Movie"} poster`;
         image.loading = "lazy";
+
         image.onerror = () => {
             image.remove();
 
             const placeholder = document.createElement("div");
             placeholder.className = "poster-placeholder";
             placeholder.textContent = "Poster unavailable";
+
             posterWrap.prepend(placeholder);
         };
 
         posterWrap.append(image);
     } else {
         const placeholder = document.createElement("div");
+
         placeholder.className = "poster-placeholder";
         placeholder.textContent = "No poster available";
+
         posterWrap.append(placeholder);
     }
 
+    // Movie rating.
     const rating = document.createElement("span");
     rating.className = "rating-badge";
 
     const vote = Number(movie.vote_average);
+
     rating.textContent =
         Number.isFinite(vote) && vote > 0
             ? `★ ${vote.toFixed(1)}`
@@ -128,6 +137,7 @@ function createMovieCard(movie) {
 
     posterWrap.append(rating);
 
+    // Movie information.
     const info = document.createElement("div");
     info.className = "movie-info";
 
@@ -136,18 +146,23 @@ function createMovieCard(movie) {
 
     const year = document.createElement("p");
     year.className = "movie-year";
-    year.textContent = (movie.release_date || movie.first_air_date || "")
-        .slice(0, 4) || "Release year unavailable";
+
+    year.textContent =
+        (movie.release_date || movie.first_air_date || "").slice(0, 4) ||
+        "Release year unavailable";
 
     const overview = document.createElement("p");
     overview.className = "movie-overview";
+
     overview.textContent =
         movie.overview || "No overview is available for this title.";
 
     const detailsButton = document.createElement("button");
+
     detailsButton.type = "button";
     detailsButton.className = "details-button";
     detailsButton.textContent = "View Details →";
+
     detailsButton.addEventListener("click", () => {
         openMovieDetails(movie);
     });
@@ -175,14 +190,21 @@ function renderMovies(movies, append = false) {
     updateCount(movieGrid.children.length);
 }
 
-async function fetchMovies({ query = "", page = 1, append = false } = {}) {
+async function fetchMovies({
+    query = "",
+    page = 1,
+    append = false
+} = {}) {
     if (isLoading) {
         return;
     }
 
     setLoading(true);
+
     setStatus(
-        append ? "Finding more movies..." : "Searching the movie database...",
+        append
+            ? "Finding more movies..."
+            : "Searching the movie database...",
         true
     );
 
@@ -192,21 +214,30 @@ async function fetchMovies({ query = "", page = 1, append = false } = {}) {
             : `/movie/popular?page=${page}`;
 
         const data = await apiRequest(endpoint);
-        const movies = Array.isArray(data.results) ? data.results : [];
+
+        const movies = Array.isArray(data.results)
+            ? data.results
+            : [];
 
         currentPage = data.page || page;
         totalPages = Math.min(data.total_pages || 1, 500);
 
-        if (!append) {
-            movieGrid.replaceChildren();
-        }
-
         if (movies.length === 0 && !append) {
+            movieGrid.replaceChildren();
             updateCount(0);
             loadMoreContainer.hidden = true;
+
+            resultsTitle.textContent = query
+                ? `Results for "${query}"`
+                : "Popular Movies";
+
+            resultsSubtitle.textContent =
+                "Try another search to discover more movies.";
+
             setStatus(
                 "No movies found. Try another title or check your spelling."
             );
+
             return;
         }
 
@@ -230,7 +261,10 @@ async function fetchMovies({ query = "", page = 1, append = false } = {}) {
         }
 
         loadMoreContainer.hidden = true;
-        setStatus(error.message || "Something went wrong. Please try again.");
+
+        setStatus(
+            error.message || "Something went wrong. Please try again."
+        );
     } finally {
         setLoading(false);
     }
@@ -238,12 +272,15 @@ async function fetchMovies({ query = "", page = 1, append = false } = {}) {
 
 async function openMovieDetails(movie) {
     const title = movie.title || movie.name || "Movie Details";
+
     movieDetails.replaceChildren();
 
     const content = document.createElement("div");
     content.className = "dialog-content";
 
+    // Poster.
     const poster = document.createElement("img");
+
     poster.className = "dialog-poster";
     poster.alt = `${title} poster`;
 
@@ -253,6 +290,7 @@ async function openMovieDetails(movie) {
         poster.hidden = true;
     }
 
+    // Details section.
     const information = document.createElement("div");
 
     const heading = document.createElement("h2");
@@ -264,16 +302,21 @@ async function openMovieDetails(movie) {
 
     const year = (movie.release_date || "").slice(0, 4);
     const rating = Number(movie.vote_average);
+
     const ratingText =
         Number.isFinite(rating) && rating > 0
             ? `★ ${rating.toFixed(1)}`
             : "Not rated";
 
-    meta.textContent = [year, ratingText].filter(Boolean).join(" · ");
+    meta.textContent = [year, ratingText]
+        .filter(Boolean)
+        .join(" · ");
 
     const overview = document.createElement("p");
     overview.className = "dialog-overview";
-    overview.textContent = movie.overview || "No overview available.";
+
+    overview.textContent =
+        movie.overview || "No overview available.";
 
     const extra = document.createElement("p");
     extra.className = "dialog-extra";
@@ -289,6 +332,7 @@ async function openMovieDetails(movie) {
 
     try {
         const details = await apiRequest(`/movie/${movie.id}`);
+
         const genres = Array.isArray(details.genres)
             ? details.genres.map((genre) => genre.name).join(", ")
             : "";
@@ -298,6 +342,7 @@ async function openMovieDetails(movie) {
             : "";
 
         const releaseDate = details.release_date || "";
+
         const language = details.original_language
             ? details.original_language.toUpperCase()
             : "";
@@ -314,10 +359,13 @@ async function openMovieDetails(movie) {
             : "Additional details are unavailable.";
     } catch (error) {
         console.error("Movie details error:", error);
-        extra.textContent = "Additional details could not be loaded.";
+
+        extra.textContent =
+            "Additional details could not be loaded.";
     }
 }
 
+// Search for movies.
 searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -339,8 +387,9 @@ searchForm.addEventListener("submit", (event) => {
     });
 });
 
+// Load additional results.
 loadMoreButton.addEventListener("click", () => {
-    if (currentPage < totalPages) {
+    if (currentPage < totalPages && !isLoading) {
         fetchMovies({
             query: currentQuery,
             page: currentPage + 1,
@@ -349,16 +398,19 @@ loadMoreButton.addEventListener("click", () => {
     }
 });
 
+// Close the movie details dialog.
 dialogClose.addEventListener("click", () => {
     movieDialog.close();
 });
 
+// Close the dialog when clicking outside its content.
 movieDialog.addEventListener("click", (event) => {
     if (event.target === movieDialog) {
         movieDialog.close();
     }
 });
 
+// Reset to popular movies when the search field is cleared.
 searchInput.addEventListener("input", () => {
     if (searchInput.value.trim() === "") {
         currentQuery = "";
@@ -366,5 +418,8 @@ searchInput.addEventListener("input", () => {
 });
 
 // Load popular movies when the application starts.
-fetchMovies({ query: "", page: 1, append: false });
-```
+fetchMovies({
+    query: "",
+    page: 1,
+    append: false
+});
